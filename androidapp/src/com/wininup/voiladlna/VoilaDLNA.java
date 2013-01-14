@@ -19,7 +19,6 @@
 
 package com.wininup.voiladlna;
 
-import android.app.Activity;
 import android.os.Bundle;
 import org.apache.cordova.*;
 
@@ -32,4 +31,3 @@ public class VoilaDLNA extends DroidGap
         super.loadUrl("file:///android_asset/www/index.html");
     }
 }
-
