@@ -16,34 +16,76 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-var app = {
-    // Application Constructor
-    initialize: function() {
-        this.bindEvents();
-    },
-    // Bind Event Listeners
-    //
-    // Bind any events that are required on startup. Common events are:
-    // 'load', 'deviceready', 'offline', and 'online'.
-    bindEvents: function() {
-        document.addEventListener('deviceready', this.onDeviceReady, false);
-    },
-    // deviceready Event Handler
-    //
-    // The scope of 'this' is the event. In order to call the 'receivedEvent'
-    // function, we must explicity call 'app.receivedEvent(...);'
-    onDeviceReady: function() {
-        app.receivedEvent('deviceready');
-    },
-    // Update DOM on a Received Event
-    receivedEvent: function(id) {
-        var parentElement = document.getElementById(id);
-        var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
+var App = function() {
+	this.initialize();
+	window.App = this;
+};
+App.prototype.initialize = function() {
+	this.debug("Start App");
+	this.bindEvents();
+};
+App.prototype.debug = function(text) {
+	var debugElement = document.getElementById('debug');
+	debugElement.value = (debugElement.value + "\n" + text);
+};
+// Bind any events that are required on startup. Common events are:
+// 'load', 'deviceready', 'offline', and 'online'.
+App.prototype.bindEvents = function() {
+	// TODO: find the test for detecting PhoneGap framework
+	// only for Desktops debug
+//	document.addEventListener('DOMContentLoaded', this.__onDeviceReady, false);
 
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
+	document.addEventListener('deviceready', this.__onDeviceReady, false);
+};
+// "__" prefix means that this method is called in the "window" context
+App.prototype.__onDeviceReady = function() {
+	var that = window.App;
+	that.initNativeCode();
+	that.MainApp();
+};
+App.prototype.initNativeCode = function() {
+	window.echo = function(str, callback) {
+		cordova.exec(callback, function(err) {
+			callback('Nothing to echo.');
+		}, "Dlna", "echo", [str]);
+	};
+	this.debug('Native code plugin "Dlna" registred.');
+};
+App.prototype.UpdateReadyGui = function() {
+	var parentElement = document.getElementById('deviceready');
+	var listeningElement = parentElement.querySelector('.listening');
+	var receivedElement = parentElement.querySelector('.received');
 
-        console.log('Received Event: ' + id);
-    }
+	listeningElement.setAttribute('style', 'display:none;');
+	receivedElement.setAttribute('style', 'display:block;');
+};
+App.prototype.MainApp = function() {
+	this.debug('-- Run Main Application Code --');
+	var that = this;
+	
+	this.UpdateReadyGui();
+
+	try {
+		window.echo("Yahoo !!!", function(echoValue) {
+			console.log(echoValue);
+			that.debug(echoValue);
+		});
+	}
+	catch (err) {
+		console.log(err.message);
+	}
+
+	try {
+		navigator.notification.beep(1);
+	}
+	catch (err) {
+		console.log(err.message);
+	}
+
+	try {
+		navigator.notification.vibrate(0);
+	}
+	catch (err) {
+		console.log(err.message);
+	}
 };
