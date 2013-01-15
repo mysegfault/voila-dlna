@@ -17,25 +17,28 @@
  * under the License.
  */
 var App = function() {
+	this.isAndroidEnv = window.device;
 	this.initialize();
 	window.App = this;
 };
 App.prototype.initialize = function() {
-	this.debug("Start App");
-	this.bindEvents();
+	this.debug("Start App - " + (this.isAndroidEnv ? 'Android' : 'Browser') + ' detected');
+	var readyEvent = this.isAndroidEnv ? 'deviceready' : 'DOMContentLoaded';
+	document.addEventListener(readyEvent, this.__onDeviceReady, false);
+
+	if (this.isAndroidEnv) {
+		var debugElement = document.getElementById('debug');
+		debugElement.style.display = "block";
+	}
 };
 App.prototype.debug = function(text) {
-	var debugElement = document.getElementById('debug');
-	debugElement.value = (debugElement.value + "\n" + text);
-};
-// Bind any events that are required on startup. Common events are:
-// 'load', 'deviceready', 'offline', and 'online'.
-App.prototype.bindEvents = function() {
-	// TODO: find the test for detecting PhoneGap framework
-	// only for Desktops debug
-//	document.addEventListener('DOMContentLoaded', this.__onDeviceReady, false);
-
-	document.addEventListener('deviceready', this.__onDeviceReady, false);
+	if (this.isAndroidEnv) {
+		var debugElement = document.getElementById('debug');
+		debugElement.value = (debugElement.value + "\n" + text);
+	}
+	else {
+		console.log("Debug### " + text);
+	}
 };
 // "__" prefix means that this method is called in the "window" context
 App.prototype.__onDeviceReady = function() {
@@ -44,6 +47,9 @@ App.prototype.__onDeviceReady = function() {
 	that.MainApp();
 };
 App.prototype.initNativeCode = function() {
+	if (!this.isAndroidEnv) {
+		return;
+	}
 	window.echo = function(str, callback) {
 		cordova.exec(callback, function(err) {
 			callback('Nothing to echo.');
@@ -62,28 +68,34 @@ App.prototype.UpdateReadyGui = function() {
 App.prototype.MainApp = function() {
 	this.debug('-- Run Main Application Code --');
 	var that = this;
-	
+
 	this.UpdateReadyGui();
 
 	try {
-		window.echo("Yahoo !!!", function(echoValue) {
-			console.log(echoValue);
-			that.debug(echoValue);
-		});
+		if (this.isAndroidEnv) {
+			window.echo("Yahoo !!!", function(echoValue) {
+				console.log(echoValue);
+				that.debug(echoValue);
+			});
+		}
 	}
 	catch (err) {
 		console.log(err.message);
 	}
 
 	try {
-		navigator.notification.beep(1);
+		if (this.isAndroidEnv) {
+			navigator.notification.beep(1);
+		}
 	}
 	catch (err) {
 		console.log(err.message);
 	}
 
 	try {
-		navigator.notification.vibrate(0);
+		if (this.isAndroidEnv) {
+			navigator.notification.vibrate(0);
+		}
 	}
 	catch (err) {
 		console.log(err.message);
