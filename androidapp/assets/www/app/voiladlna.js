@@ -58,12 +58,7 @@ App.prototype.initNativeCode = function() {
 	this.debug('Native code plugin "Dlna" registred.');
 };
 App.prototype.UpdateReadyGui = function() {
-	var parentElement = document.getElementById('deviceready');
-	var listeningElement = parentElement.querySelector('.listening');
-	var receivedElement = parentElement.querySelector('.received');
-
-	listeningElement.setAttribute('style', 'display:none;');
-	receivedElement.setAttribute('style', 'display:block;');
+	$('#deviceready').text('Connected!');
 };
 App.prototype.MainApp = function() {
 	this.debug('-- Run Main Application Code --');
