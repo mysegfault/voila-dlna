@@ -1,24 +1,27 @@
 <!DOCTYPE html>
 <html>
-    <head>
+	<head>
 		<meta charset="utf-8">
 
-        <!--<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi">-->
+		<!--<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi">-->
 		<meta name="viewport" content="width=device-width, initial-scale=1"> 
 		<meta name="format-detection" content="telephone=no">
 
 		<link rel="stylesheet" href="jquerymobile/jquerymobile.css" />
+		<link rel="stylesheet" href="voiladlna.css" />
 
 		<script src="jquery/jquery.js"></script>
+		<!--Custom script must be before jquerymobile.js -->
+		<script src="app/voiladlna-querymobile.js"></script>
 		<script src="jquerymobile/jquerymobile.js"></script>
 
 		<script src="phonegap/js/cordova-2.3.0.js"></script>
 		<script src="app/voiladlna.js"></script>
-
-        <title>Devices</title>
-    </head>
-    <body>
-		<textarea id="debug" style="display: none; color: black; font-size: .6em;" class="event debug" cols="80" rows="30">-- Debug Infos ---</textarea>
+		
+		<title>Devices</title>
+	</head>
+	<body>
+		<!--<textarea id="debug" style="display: none; color: black; font-size: .6em;" class="event debug" cols="80" rows="30">-- Debug Infos ---</textarea>-->
 
 		<div data-role="page" id="devices">
 			<div data-role="header">
@@ -26,9 +29,11 @@
 			</div>
 			<div data-role="content">
 				<p id="deviceready">Connecting to your server...</p>
+			</div>
+			<div data-role="footer" data-id="dlna-footer" data-fullscreen="true" data-position="fixed">
 				<div data-role="navbar">
 					<ul>
-						<li><a href="#devices" class="ui-btn-active">Devices</a></li>
+						<li><a href="#devices" class="ui-btn-active ui-state-persist">Devices</a></li>
 						<li><a href="#library">Library</a></li>
 						<li><a href="#playlist">Playlist</a></li>
 					</ul>
@@ -42,10 +47,12 @@
 			</div>
 			<div data-role="content">
 				<p>Your library has 42 songs.</p>
+			</div>
+			<div data-role="footer" data-id="dlna-footer" data-fullscreen="true" data-position="fixed">
 				<div data-role="navbar">
 					<ul>
 						<li><a href="#devices">Devices</a></li>
-						<li><a href="#library" class="ui-btn-active">Library</a></li>
+						<li><a href="#library" class="ui-btn-active ui-state-persist">Library</a></li>
 						<li><a href="#playlist">Playlist</a></li>
 					</ul>
 				</div>
@@ -58,11 +65,13 @@
 			</div>
 			<div data-role="content">
 				<p>Your are playing: Les musclés.</p>
+			</div>
+			<div data-role="footer" data-id="dlna-footer" data-fullscreen="true" data-position="fixed">
 				<div data-role="navbar">
 					<ul>
 						<li><a href="#devices">Devices</a></li>
 						<li><a href="#library">Library</a></li>
-						<li><a href="#playlist" class="ui-btn-active">Playlist</a></li>
+						<li><a href="#playlist" class="ui-btn-active ui-state-persist">Playlist</a></li>
 					</ul>
 				</div>
 			</div>
