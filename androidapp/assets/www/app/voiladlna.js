@@ -1,5 +1,5 @@
 var App = function() {
-	this.isAndroidEnv = window.device;
+	this.isAndroidEnv = (window.location.search === '?_phonegap=true');
 	this.initialize();
 	window.App = this;
 };

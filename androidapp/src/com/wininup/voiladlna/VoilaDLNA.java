@@ -28,6 +28,6 @@ public class VoilaDLNA extends DroidGap
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        super.loadUrl("file:///android_asset/www/index.html");
+        super.loadUrl("file:///android_asset/www/index.html?_phonegap=true");
     }
 }
