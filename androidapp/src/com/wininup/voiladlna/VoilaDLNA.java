@@ -24,10 +24,13 @@ import org.apache.cordova.*;
 
 public class VoilaDLNA extends DroidGap
 {
+	private Controller _Ctrl;
+	
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        super.loadUrl("file:///android_asset/www/index.html?_phonegap=true");
+        _Ctrl = Controller.getInstance(this);
+        super.loadUrl("file:///android_asset/www/index.html?_phonegap=true");        
     }
 }
