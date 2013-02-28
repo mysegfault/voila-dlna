@@ -16,13 +16,13 @@ App.prototype.initialize = function() {
 	}
 };
 App.prototype.debug = function(text) {
-	// if (this.isAndroidEnv) {
+	if (this.isAndroidEnv) {
 		var debugElement = document.getElementById('debug');
 		debugElement.value = (debugElement.value + "\n" + text);
-//	}
-//	else {
+	}
+	else {
 		console.log("Debug### " + text);
-//	}
+	}
 };
 // "__" prefix means that this method is called in the "window" context
 App.prototype.__onDeviceReady = function() {
@@ -63,14 +63,18 @@ App.prototype.initNativeCode = function() {
  * 
  * 	call by java when a upnp device has arrived or gone in the local network
  * 
- * @param JSON object sent by java
+ * @param devices list, JSON object sent by java
  *
  * */
-App.prototype._onUpnpEvent = function(info) {
-	if (info) {
-		var that = window.App;
+App.prototype._onUpnpEvent = function(devices) {
+	
+	if (devices) {
 		
-		that.debug("_onUpnpEvent : " + JSON.stringify(info , null, 4));
+		var that = window.App;
+		var devicesStr = JSON.stringify(devices , null, 4)
+		
+		that.debug("_onUpnpEvent : " + devicesStr);
+		document.getElementById('deviceready').innerHTML = devicesStr;
 		
 	}
 }
@@ -81,6 +85,7 @@ App.prototype._onUpnpError = function(e) {
 	var that = window.App;
 	that.debug('_onError : ' + e);
 }
+
 App.prototype.UpdateReadyGui = function() {
 	try {
 		$('#deviceready').text('Connected ! jquery ');

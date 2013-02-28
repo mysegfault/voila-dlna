@@ -211,21 +211,13 @@ public class Dlna extends CordovaPlugin {
             this.callbackContext.sendPluginResult(result);
         }
     }
-    
-	/**
-	 * Change to force eclipse to recompile after non java (HTML/JS) modifications
-	 **/
-    private void Dummy()
-    {
-    	int bitch = 0;
-    	bitch++;
-    	bitch++;
-    	
-    }
-    
-    protected class BrowseRegistryListener extends DefaultRegistryListener {
 
-        /* Discovery performance optimization for very slow Android devices! */
+    /**
+     * 
+     * receives upnp discovery service event in service thread context
+     * 
+     * */
+    protected class BrowseRegistryListener extends DefaultRegistryListener {
 
         @Override
         public void remoteDeviceDiscoveryStarted(Registry registry, RemoteDevice device) {
@@ -235,10 +227,10 @@ public class Dlna extends CordovaPlugin {
         @Override
         public void remoteDeviceDiscoveryFailed(Registry registry, final RemoteDevice device, final Exception ex) {
             
-        	_Ctrl.show(
-                    "Discovery failed of '" + device.getDisplayString() + "': " + 
-                    (ex != null ? ex.toString() : "Couldn't retrieve device/service descriptors"));
-            deviceRemoved(device);
+        	// should log
+            // "Discovery failed of '" + device.getDisplayString() + "': " + (ex != null ? ex.toString() : "Couldn't retrieve device/service descriptors"));
+            
+        	deviceRemoved(device);
         }
         /* End of optimization, you can remove the whole block if your Android handset is fast (>= 600 Mhz) */
 
@@ -264,28 +256,31 @@ public class Dlna extends CordovaPlugin {
 
         public void deviceAdded(final Device device) {
         	
-            
-            _Ctrl.show("deviceAdded : " + device.toString());
-
-            int position = deviceList.indexOf(device);
-            if (position >= 0) {
-                // Device already in the list, re-set new value at same position
-                deviceList.remove(device);
-                deviceList.add(position, device);
-            } else {
-                deviceList.add(device);
-            }
-            
-            sendDeviceList();
+        	_Ctrl.runOnUiThread(new Runnable() {
+        		public void run() {
+		            _Ctrl.show("deviceAdded : " + device.toString());
+		            int position = deviceList.indexOf(device);
+		            if (position >= 0) {
+		                // Device already in the list, re-set new value at same position
+		                deviceList.remove(device);
+		                deviceList.add(position, device);
+		            } else {
+		                deviceList.add(device);
+		            }
+		            sendDeviceList();
+        		}
+        	});
         }
 
         public void deviceRemoved(final Device device) {
         	
-        	_Ctrl.show("deviceRemoved : " + device.toString());
-
-        	deviceList.remove(device);
-        	
-        	sendDeviceList();
+        	_Ctrl.runOnUiThread(new Runnable() {
+        		public void run() {
+		        	_Ctrl.show("deviceRemoved : " + device.toString());
+		        	deviceList.remove(device);
+		        	sendDeviceList();
+        		}
+        	});
         }
     }
 }
