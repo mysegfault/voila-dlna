@@ -71,20 +71,21 @@ App.prototype._onUpnpEvent = function(devices) {
 	if (devices) {
 		
 		var that = window.App;
-		var devicesStr = JSON.stringify(devices , null, 4)
+		var devicesStr = JSON.stringify(devices , null, 4);
 		
 		that.debug("_onUpnpEvent : " + devicesStr);
 		document.getElementById('deviceready').innerHTML = devicesStr;
 		
 	}
-}
+};
+
 /**
  *	  Error from cordova plugin
  * */
 App.prototype._onUpnpError = function(e) {
 	var that = window.App;
 	that.debug('_onError : ' + e);
-}
+};
 
 App.prototype.UpdateReadyGui = function() {
 	try {
