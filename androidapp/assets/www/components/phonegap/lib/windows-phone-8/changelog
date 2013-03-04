@@ -1,0 +1,14 @@
+
+Windows Phone 8 
+---
+
+fa0465a Merge pull request #7 from purplecabbage/2.5.0_ReleasePrep
+6e000cf update js from cordova-js
+a450ea8 2.5.0rc1 release prep
+066d798 Merge pull request #6 from purplecabbage/CB-2323
+45548b2 <cordova> becomes <widget>
+c9133fe Merge pull request #5 from purplecabbage/CB-2212
+871efd9 checks app resources if iso file does not exist, added mime types for html+js
+60256d1 Merge branch 'CB2212-FileResource' of github.com:purplecabbage/cordova-wp8
+f3547e1 Events were wrong, not fired correctly
+54e6606 detect instances where item is a resource, and use a stream instead of iso-store, wip

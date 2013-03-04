@@ -1,0 +1,26 @@
+
+Android 
+---
+
+fb1455a Preparing to tag 2.5.0
+5462edd Updating the JS for 2.5.0rc1
+fef51f1 Apparently the JS was wrong when tagging
+5cd1773 Tagging 2.5.0rc1.  Updating files
+cb19205 CB-2458: gracefully exit with back button If users do extra initialization, we can get NPEs when hitting the back button before loadUrl() has been called. -Null fenced code in startOfHistory() that gave us an NPE when hitting Back button with useBrowserHistory=true -Call finish() in Back button code when no history since with useBrowserHistory=true it would just hang while the app inits -Call loadUrlIntoView() first in handleDestory() since with useBrowserHistory=false, the default behavior would try to use the baseUrl which is null
+892f96e CB-2282: Turning on AppCache
+13ef58a Updated XML for the test project
+a45d5a9 CB-1605: Going through Eclipse warnings, removing the unused imports
+a31714f CB-2447: This is a non-trivial task.  Migrated test plugin to modern plugin API.
+23d2a80 Merge branch 'CB-2447' of git://github.com/jamesjong/cordova-android
+c20b233 CB-2446: Ugly, but workable fix
+8613551 minor readme stuff
+2ab01da Adding link to cordova.io in readme
+790636c CB-2447: Remove use of deprecate org.apache.cordova.api.Plugin
+2393883 [CB-2213] Add NATIVE_URI to the quick-return logic.
+674b870 [CB-2297] Fix for geolocaion database error
+83d9248 Update framework/src/org/apache/cordova/ContactAccessorSdk5.java
+f9d27e4 CB-2408: There should be a check for the browser history, but the logic intentionally doesn't match
+2683803 Add check for build targets in create script
+dd86d7a [CB-2095] Delete file on FileTransfer.download fail
+1246a81 [CB-2213] Added NATIVE_URI support.
+8ab7278 Code clean-up of FileTransfer

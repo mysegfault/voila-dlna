@@ -1,0 +1,16 @@
+{
+  "name": "voiladlna",
+  "version": "0.0.1",
+  "dependencies": {
+    "jquery": "",
+    "phonegap": "",
+    "requirejs": ""
+  },
+  "_id": "voiladlna@0.0.1",
+  "readme": "ERROR: No README.md file found!",
+  "description": "ERROR: No README.md file found!",
+  "repository": {
+    "type": "local",
+    "path": "components/voiladlna/"
+  }
+}
