@@ -79,9 +79,6 @@ App.prototype._onUpnpEvent = function(devices) {
 	}
 };
 
-/**
- *	  Error from cordova plugin
- * */
 App.prototype._onUpnpError = function(e) {
 	var that = window.App;
 	that.debug('_onError : ' + e);
