@@ -1,0 +1,8 @@
+{
+  "name": "phonegap",
+  "version": "0.0.0",
+  "repository": {
+    "type": "local",
+    "path": "phonegap"
+  }
+}
