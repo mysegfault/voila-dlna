@@ -1,3 +1,14 @@
+/**
+ * 
+ * 
+ * 
+ * 
+ * To start Av transport look at :
+ * http://code.google.com/p/ndphu-training-projects/source/browse/DLNADemo/src/com/gui/BrowseRegistryListener.java?r=4
+ * 
+ * 
+ * */
+
 package com.wininup.voiladlna;
 
 import java.util.ArrayList;
@@ -10,22 +21,44 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.teleal.cling.android.AndroidUpnpService;
+import org.teleal.cling.controlpoint.ActionCallback;
+import org.teleal.cling.model.action.ActionInvocation;
+import org.teleal.cling.model.message.UpnpResponse;
+import org.teleal.cling.model.meta.Action;
 import org.teleal.cling.model.meta.Device;
 import org.teleal.cling.model.meta.LocalDevice;
+import org.teleal.cling.model.meta.LocalService;
 import org.teleal.cling.model.meta.RemoteDevice;
+import org.teleal.cling.model.meta.Service;
+import org.teleal.cling.model.types.DeviceType;
+import org.teleal.cling.model.types.UDAServiceId;
+import org.teleal.cling.model.types.UnsignedIntegerFourBytes;
 import org.teleal.cling.registry.DefaultRegistryListener;
 import org.teleal.cling.registry.Registry;
+import org.teleal.cling.support.contentdirectory.callback.Browse;
+import org.teleal.cling.support.model.BrowseFlag;
+import org.teleal.cling.support.model.DIDLContent;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.provider.Browser;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 
 /**
  * This class echoes a string called from JavaScript.
  */
 public class Dlna extends CordovaPlugin {
+
+	
+	/**
+	 * @todo  find an enum
+	 * */
+	private final static String deviceTypeMediaServer = "urn:schemas-upnp-org:device:MediaServer:1";
+
 	
 	private Controller _Ctrl;
 	private AndroidUpnpService upnpService;
@@ -128,6 +161,8 @@ public class Dlna extends CordovaPlugin {
     
     /**
      * Binding to UPNP Cling discover service
+     * 
+     * automatically called ?
      */
     private void start()
     {
@@ -142,6 +177,8 @@ public class Dlna extends CordovaPlugin {
     
     /**
      * Unbind UPNP Cling discover service
+     * 
+     * automatically called ?
      * */
     private void stop() {
 		
@@ -168,35 +205,81 @@ public class Dlna extends CordovaPlugin {
 	private void sendDeviceList()
 	{
 		JSONObject devices = new JSONObject();
-		JSONArray array = new JSONArray();
 		
-		
-        try {
-        
-        	for (Device device : deviceList) {
-        		
-        		JSONObject obj = new JSONObject();
-        		
-        		obj.put("Name", device.getDisplayString());
-        		obj.put("Version", device.getVersion());
-        		obj.put("Type", device.getType().toString());
-			
-        		array.put(obj);
-			}
-        	
-        	// bidouille
-        	devices.put("devices", array);
-        	
+        try {	
+        	devices.put("devices", deviceList);
         }
 		catch (JSONException e) {
-
 			_Ctrl.show("sendDeviceList : " + e.getMessage());
 			// Log.e(LOG_TAG, e.getMessage(), e);
 	    }
         
         sendUpdate(devices, true);
-		
 	}
+	
+	
+	
+	public void browse(Device device){
+		
+			// Service service = device.getServices()[1];
+		
+			Service service;
+			service = device.findService(new UDAServiceId("ContentDirectory"));
+
+			Action action = service.getAction("Browse");
+			
+			new Browse(service, "0", BrowseFlag.DIRECT_CHILDREN) {
+				
+				@Override
+			    public void received(ActionInvocation actionInvocation, DIDLContent didl) {
+	
+					_Ctrl.show("Browse found items : " + didl.getItems().size());
+					
+			    }
+	
+			    @Override
+			    public void updateStatus(Status status) {
+			        // Called before and after loading the DIDL content
+			    }
+	
+			    @Override
+			    public void failure(ActionInvocation invocation,
+			                        UpnpResponse operation,
+			                        String defaultMsg) {
+			        // Something wasn't right...
+			    }
+	
+				
+			};
+	}
+	
+	private void browse2(Action getFiles, AndroidUpnpService upnpService) {
+		
+        ActionInvocation mActionInvocation=new ActionInvocation(getFiles);
+                    mActionInvocation.setInput("ObjectID", "0");
+                    mActionInvocation.setInput("BrowseFlag", "BrowseDirectChildren");
+                    mActionInvocation.setInput("Filter", "*");
+                    mActionInvocation.setInput("StartingIndex", new UnsignedIntegerFourBytes(0));
+                    mActionInvocation.setInput("RequestedCount", new UnsignedIntegerFourBytes(2));
+                    mActionInvocation.setInput("SortCriteria", "+dc:title");
+                    ActionCallback mActionCallback=new ActionCallback(mActionInvocation) {
+                           
+                            @Override
+                            public void success(ActionInvocation actionInvocation) {
+                            	String result=actionInvocation.getOutput("Result").getValue().toString();
+                            	_Ctrl.show("browse2 success");
+                            	
+                            	Log.i("UPNP", result);
+                            	
+                            }
+                           
+                            @Override
+                            public void failure(ActionInvocation actionInvocation, UpnpResponse operation, String defaultMsg) {
+                            	_Ctrl.show("browse2 failure");
+                            }
+                    };
+                    upnpService.getControlPoint().execute(mActionCallback);
+            } 
 	
 	
 	/**
@@ -212,6 +295,11 @@ public class Dlna extends CordovaPlugin {
         }
     }
 
+    
+    
+    // class SetAVTransportURI extends ActionInvocation {
+
+    
     /**
      * 
      * receives upnp discovery service event in service thread context
@@ -219,9 +307,10 @@ public class Dlna extends CordovaPlugin {
      * */
     protected class BrowseRegistryListener extends DefaultRegistryListener {
 
+    	/* start of optimization */
         @Override
         public void remoteDeviceDiscoveryStarted(Registry registry, RemoteDevice device) {
-            deviceAdded(device);
+            // deviceAdded(device);
         }
 
         @Override
@@ -230,7 +319,7 @@ public class Dlna extends CordovaPlugin {
         	// should log
             // "Discovery failed of '" + device.getDisplayString() + "': " + (ex != null ? ex.toString() : "Couldn't retrieve device/service descriptors"));
             
-        	deviceRemoved(device);
+        	// deviceRemoved(device);
         }
         /* End of optimization, you can remove the whole block if your Android handset is fast (>= 600 Mhz) */
 
@@ -258,7 +347,44 @@ public class Dlna extends CordovaPlugin {
         	
         	_Ctrl.runOnUiThread(new Runnable() {
         		public void run() {
-		            _Ctrl.show("deviceAdded : " + device.toString());
+        			
+        			// _Ctrl.show("device.getType().toString() :  " + device.getType().toString());
+        			
+        			if (device.getType().toString().equals(deviceTypeMediaServer))
+        			{
+        				_Ctrl.show("MediaServer " + device.getServices().length  + " services");
+        				
+        				
+        				
+        				for (Service service : device.getServices())
+        				{
+        					// _Ctrl.show("MediaServer : " + service.toString());
+        					Log.i("UPNP", "service : " + service.toString());
+        					
+        					for (Action action : service.getActions())
+            				{
+        						Log.i("UPNP", "action : " + action.toString());
+        						
+        						if (action.toString().equals("Browse"))
+        						{
+        							//action.
+        							
+        						}
+            				}
+        					
+        				}
+        				
+        				// browse(device);
+        				
+        				Service service = device.findService(new UDAServiceId("ContentDirectory"));
+        				Action action = service.getAction("Browse");
+        				
+        				browse2(action, upnpService);
+        				
+        				
+        			}
+        			
+		            // _Ctrl.show("deviceAdded : " + device.toString());
 		            int position = deviceList.indexOf(device);
 		            if (position >= 0) {
 		                // Device already in the list, re-set new value at same position
