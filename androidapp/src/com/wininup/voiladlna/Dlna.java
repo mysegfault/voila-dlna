@@ -21,7 +21,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.teleal.cling.android.AndroidUpnpService;
+import org.teleal.cling.binding.annotations.AnnotationLocalServiceBinder;
 import org.teleal.cling.controlpoint.ActionCallback;
+import org.teleal.cling.model.DefaultServiceManager;
 import org.teleal.cling.model.action.ActionInvocation;
 import org.teleal.cling.model.message.UpnpResponse;
 import org.teleal.cling.model.meta.Action;
@@ -35,9 +37,12 @@ import org.teleal.cling.model.types.UDAServiceId;
 import org.teleal.cling.model.types.UnsignedIntegerFourBytes;
 import org.teleal.cling.registry.DefaultRegistryListener;
 import org.teleal.cling.registry.Registry;
+import org.teleal.cling.support.contentdirectory.AbstractContentDirectoryService;
 import org.teleal.cling.support.contentdirectory.callback.Browse;
 import org.teleal.cling.support.model.BrowseFlag;
 import org.teleal.cling.support.model.DIDLContent;
+import org.teleal.cling.support.model.container.Container;
+import org.teleal.cling.support.model.item.Item;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -58,6 +63,9 @@ public class Dlna extends CordovaPlugin {
 	 * @todo  find an enum
 	 * */
 	private final static String deviceTypeMediaServer = "urn:schemas-upnp-org:device:MediaServer:1";
+
+
+	private static final String LOG_TAG = "UPNP cling";
 
 	
 	private Controller _Ctrl;
@@ -217,40 +225,78 @@ public class Dlna extends CordovaPlugin {
         sendUpdate(devices, true);
 	}
 	
+//	public Service createService() {
+//		LocalService<AbstractContentDirectoryService> service =
+//                 new AnnotationLocalServiceBinder().read(AbstractContentDirectoryService.class);
+//        service.setManager(
+//                 new DefaultServiceManager<AbstractContentDirectoryService>(service, null) {
+//                     @Override
+//                     protected AbstractContentDirectoryService createServiceInstance() throws Exception {
+//                         return new MP3ContentDirectory();
+//                     }
+//                 }
+//         );
+//         return service;
+//     }
 	
-	
-	public void browse(Device device){
+	public void browse(final Device device){
 		
-			// Service service = device.getServices()[1];
-		
-			Service service;
-			service = device.findService(new UDAServiceId("ContentDirectory"));
+			try
+			{
+				new Thread(new Runnable() {
 
-			Action action = service.getAction("Browse");
-			
-			new Browse(service, "0", BrowseFlag.DIRECT_CHILDREN) {
-				
-				@Override
-			    public void received(ActionInvocation actionInvocation, DIDLContent didl) {
-	
-					_Ctrl.show("Browse found items : " + didl.getItems().size());
+					@Override
+					public void run() {
+
+							Service service = device.findService(new UDAServiceId("ContentDirectory"));
+							ActionCallback simpleBrowseAction = new Browse(service, "0", BrowseFlag.DIRECT_CHILDREN) {
+								
+								@Override
+							    public void received(ActionInvocation actionInvocation, DIDLContent didl) {
 					
-			    }
-	
-			    @Override
-			    public void updateStatus(Status status) {
-			        // Called before and after loading the DIDL content
-			    }
-	
-			    @Override
-			    public void failure(ActionInvocation invocation,
-			                        UpnpResponse operation,
-			                        String defaultMsg) {
-			        // Something wasn't right...
-			    }
-	
+									List<Container> containers = didl.getContainers();
+									List<Item> items = didl.getItems();
+									
+									_Ctrl.show("found " + containers.size() + "containers and " + items.size() + " items" );
+									
+									if (containers.size() > 0) {
+										Container container = containers.get(0);										
+										Log.i(LOG_TAG, container.getTitle() + " from " + device.getDetails().getFriendlyName());
+									}
+									else if (items.size() > 0) {
+										Item item = items.get(0);										
+										Log.i(LOG_TAG, item.getTitle() + " from " + device.getDetails().getFriendlyName());
+									}
+									
+							    }
+					
+							    @Override
+							    public void updateStatus(Status status) {
+							        // Called before and after loading the DIDL content
+							    }
+					
+							    @Override
+							    public void failure(ActionInvocation invocation,
+							                        UpnpResponse operation,
+							                        String defaultMsg) {
+							        // Something wasn't right...
+							    }
+							};
+							
+							simpleBrowseAction.setControlPoint(upnpService.getControlPoint()); 
+							simpleBrowseAction.run();
 				
-			};
+					}
+
+				}).start();
+				
+			}
+			catch (Exception ee)
+			{
+				Log.d(LOG_TAG, ee.getMessage(), ee);
+			}
+			
+			
 	}
 	
 	private void browse2(Action getFiles, AndroidUpnpService upnpService) {
@@ -354,34 +400,29 @@ public class Dlna extends CordovaPlugin {
         			{
         				_Ctrl.show("MediaServer " + device.getServices().length  + " services");
         				
+        				browse(device);
+        				
+//        				Service service = device.findService(new UDAServiceId("ContentDirectory"));
+//        				Action action = service.getAction("Browse");
+//        				browse2(action, upnpService);
         				
         				
-        				for (Service service : device.getServices())
-        				{
-        					// _Ctrl.show("MediaServer : " + service.toString());
-        					Log.i("UPNP", "service : " + service.toString());
-        					
-        					for (Action action : service.getActions())
-            				{
-        						Log.i("UPNP", "action : " + action.toString());
-        						
-        						if (action.toString().equals("Browse"))
-        						{
-        							//action.
-        							
-        						}
-            				}
-        					
-        				}
-        				
-        				// browse(device);
-        				
-        				Service service = device.findService(new UDAServiceId("ContentDirectory"));
-        				Action action = service.getAction("Browse");
-        				
-        				browse2(action, upnpService);
-        				
-        				
+//        				for (Service service : device.getServices())
+//        				{
+//        					// _Ctrl.show("MediaServer : " + service.toString());
+//        					Log.i(LOG_TAG, "service : " + service.toString());
+//        					
+//        					for (Action action : service.getActions())
+//            				{
+//        						Log.i(LOG_TAG, "action : " + action.toString());
+//        						
+//        						if (action.toString().equals("Browse"))
+//        						{
+//        							//action.
+//        							
+//        						}
+//            				}
+//        				}
         			}
         			
 		            // _Ctrl.show("deviceAdded : " + device.toString());
