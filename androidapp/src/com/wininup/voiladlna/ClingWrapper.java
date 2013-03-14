@@ -158,25 +158,51 @@ public class ClingWrapper {
 //         return service;
 //     }
 	
-	public void browse(final Device device){
+	
+	
+	private Device findDevice(String UDN) {
+
+		for (Device device : deviceList)
+		{
+			if (device.getIdentity().getUdn().toString().equals(UDN))
+				return device;
+		}
+		return null;
+	}
+
+	/**
+	 * 
+	 * @param UDN  Unique Device Name to specify device
+	 * @param path to browse
+	 */
+	public void browse(String UDN, String path)
+	{
+		Log.i(LOG_TAG, "browsing " + UDN + " at " + path);
+		browse(findDevice(UDN), path);
+	}
+	
+	
+	private void browse(final Device device, final String path){
 		
-			try
-			{
+		if (device != null)
+		{
+			Log.i(LOG_TAG, "browsing " + device.getDisplayString());
+			Log.i(LOG_TAG, "device.getIdentity() " + device.getIdentity().getUdn().toString());
+			try {
 				new Thread(new Runnable() {
 
 					@Override
 					public void run() {
-
 							Service service = device.findService(new UDAServiceId("ContentDirectory"));
-							ActionCallback simpleBrowseAction = new Browse(service, "0", BrowseFlag.DIRECT_CHILDREN) {
-								
+							ActionCallback simpleBrowseAction = new Browse(service, path, BrowseFlag.DIRECT_CHILDREN) {
+
 								@Override
 							    public void received(ActionInvocation actionInvocation, DIDLContent didl) {
 					
 									List<Container> containers = didl.getContainers();
 									List<Item> items = didl.getItems();
 									
-									_Ctrl.show("found " + containers.size() + "containers and " + items.size() + " items" );
+									Log.i(LOG_TAG, "found " + containers.size() + "containers and " + items.size() + " items" );
 									
 									if (containers.size() > 0) {
 										Container container = containers.get(0);										
@@ -186,7 +212,6 @@ public class ClingWrapper {
 										Item item = items.get(0);										
 										Log.i(LOG_TAG, item.getTitle() + " from " + device.getDetails().getFriendlyName());
 									}
-									
 							    }
 					
 							    @Override
@@ -204,18 +229,13 @@ public class ClingWrapper {
 							
 							simpleBrowseAction.setControlPoint(upnpService.getControlPoint()); 
 							simpleBrowseAction.run();
-				
 					}
-
 				}).start();
-				
 			}
-			catch (Exception ee)
-			{
+			catch (Exception ee) {
 				Log.d(LOG_TAG, ee.getMessage(), ee);
 			}
-			
-			
+		}
 	}
 	
 	private void browse2(Action getFiles, AndroidUpnpService upnpService) {
@@ -295,6 +315,8 @@ public class ClingWrapper {
 
         public void deviceAdded(final Device device) {
         	
+        	Log.i(LOG_TAG, "deviceAdded : " + device.toString());
+        	
         	_Ctrl.runOnUiThread(new Runnable() {
         		public void run() {
         			
@@ -304,7 +326,7 @@ public class ClingWrapper {
         			{
         				_Ctrl.show("MediaServer " + device.getServices().length  + " services");
         				
-        				browse(device);
+        				browse(device, "0");
         				
 //        				Service service = device.findService(new UDAServiceId("ContentDirectory"));
 //        				Action action = service.getAction("Browse");
@@ -347,11 +369,11 @@ public class ClingWrapper {
 
         public void deviceRemoved(final Device device) {
         	
+        	Log.i(LOG_TAG, "deviceRemoved : " + device.toString());
+        	
         	_Ctrl.runOnUiThread(new Runnable() {
         		public void run() {
-		        	_Ctrl.show("deviceRemoved : " + device.toString());
 		        	deviceList.remove(device);
-		        	
 		        	// TODO do it in a better way
 		        	_Ctrl.getJavascriptWrapper().sendDeviceList(deviceList);
         		}
