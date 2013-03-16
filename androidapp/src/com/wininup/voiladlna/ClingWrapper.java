@@ -11,6 +11,8 @@
 
 package com.wininup.voiladlna;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +48,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnPreparedListener;
+import android.net.Uri;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -230,11 +235,17 @@ public class ClingWrapper {
 										
 										
 										// TEST
-										if (item.getTitle().equals("movie.avi")) {
+										// [www.Cpasbien.com] s8-rouille-xvid.cd2.avi (13)   http://192.168.1.3:49152/content/media/object_id/13/res_id/0/ext/file.avi
+										//
+										// 01 Adieu tristesse.mp3
+										//
+										if (item.getTitle().equals("01 Adieu tristesse.mp3")) {
 										
 											if (mediaRenderer != null && uri != null) {
-												sendToDMR(mediaRenderer, uri, "");
-												play(mediaRenderer, "0");
+												//sendToDMR(mediaRenderer, uri, "");
+												//play(mediaRenderer, "0");
+												
+												playLocally(Uri.parse(uri));
 												
 											}
 											
@@ -373,6 +384,31 @@ public class ClingWrapper {
  }
 
 
+     void playLocally(final Uri uri) {
+    	 
+    	// running in UI thread
+     	_Ctrl.runOnUiThread(new Runnable() {
+				public void run() {
+    	 
+    	 	MediaPlayer player = MediaPlayer.create(_Ctrl.getContext(), uri);
+    	    player.setOnPreparedListener(new OnPreparedListener() { 
+    	        @Override
+    	        public void onPrepared(MediaPlayer mp) {
+    	            mp.start();
+    	        }
+    	    });
+    	    
+    	    try {
+				player.prepareAsync();
+			} catch (IllegalStateException e) {
+				e.printStackTrace();
+			}
+    	    
+				}
+     	});
+
+     }
+     
 	
   // class SetAVTransportURI extends ActionInvocation {
 
@@ -425,10 +461,6 @@ public class ClingWrapper {
         	
         	// running in UI thread
         	_Ctrl.runOnUiThread(new Runnable() {
-        		
-
-				
-
 				public void run() {
         			
         			if (device.getType().toString().equals(deviceTypeMediaServer))
