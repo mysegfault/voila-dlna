@@ -27,14 +27,18 @@ import org.teleal.cling.model.meta.LocalService;
 import org.teleal.cling.model.meta.RemoteDevice;
 import org.teleal.cling.model.meta.Service;
 import org.teleal.cling.model.types.DeviceType;
+import org.teleal.cling.model.types.ServiceId;
 import org.teleal.cling.model.types.UDAServiceId;
 import org.teleal.cling.model.types.UnsignedIntegerFourBytes;
 import org.teleal.cling.registry.DefaultRegistryListener;
 import org.teleal.cling.registry.Registry;
+import org.teleal.cling.support.avtransport.callback.Play;
+import org.teleal.cling.support.avtransport.callback.SetAVTransportURI;
 import org.teleal.cling.support.contentdirectory.AbstractContentDirectoryService;
 import org.teleal.cling.support.contentdirectory.callback.Browse;
 import org.teleal.cling.support.model.BrowseFlag;
 import org.teleal.cling.support.model.DIDLContent;
+import org.teleal.cling.support.model.Res;
 import org.teleal.cling.support.model.container.Container;
 import org.teleal.cling.support.model.item.Item;
 
@@ -54,14 +58,20 @@ public class ClingWrapper {
 	 * @todo  find a better way to specify Type
 	 * */
 	private final static String deviceTypeMediaServer = "urn:schemas-upnp-org:device:MediaServer:1";
-
+	private final static String deviceTypeMediaRenderer = "urn:schemas-upnp-org:device:MediaRenderer:1";	
 	
 	private Controller _Ctrl;
 	
 	private static final String LOG_TAG = "UPNP ClingWrapper";
 
+	private ServiceId avServiceId = new UDAServiceId("AVTransport");
+	private ServiceId contentDirectoryServiceId = new UDAServiceId("ContentDirectory");
+
+	
 	private AndroidUpnpService upnpService;
 	private List<Device> deviceList;
+	private Device mediaRenderer;
+	
 	private BrowseRegistryListener registryListener = new BrowseRegistryListener();
 	private ServiceConnection serviceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
@@ -69,7 +79,7 @@ public class ClingWrapper {
             // Refresh the list with all known devices
             deviceList.clear();
             for (Device device : upnpService.getRegistry().getDevices()) {
-                registryListener.deviceAdded(device);
+                registryListener.updateDeviceList(device, false);
             }
             // Getting ready for future device advertisements
             upnpService.getRegistry().addListener(registryListener);
@@ -181,20 +191,21 @@ public class ClingWrapper {
 		browse(findDevice(UDN), path);
 	}
 	
-	
-	private void browse(final Device device, final String path){
+	/*
+	 * @param device	device to browse
+	 * @param id		"0" is root
+	 */
+	private void browse(final Device device, final String id){
 		
 		if (device != null)
 		{
-			Log.i(LOG_TAG, "browsing " + device.getDisplayString());
-			Log.i(LOG_TAG, "device.getIdentity() " + device.getIdentity().getUdn().toString());
+			Log.i(LOG_TAG, "browsing id " + id + " on " + device.getDisplayString() + " " + device.getIdentity().getUdn().toString());
 			try {
 				new Thread(new Runnable() {
-
 					@Override
 					public void run() {
-							Service service = device.findService(new UDAServiceId("ContentDirectory"));
-							ActionCallback simpleBrowseAction = new Browse(service, path, BrowseFlag.DIRECT_CHILDREN) {
+							Service service = device.findService(contentDirectoryServiceId);
+							ActionCallback simpleBrowseAction = new Browse(service, id, BrowseFlag.DIRECT_CHILDREN) {
 
 								@Override
 							    public void received(ActionInvocation actionInvocation, DIDLContent didl) {
@@ -202,15 +213,38 @@ public class ClingWrapper {
 									List<Container> containers = didl.getContainers();
 									List<Item> items = didl.getItems();
 									
-									Log.i(LOG_TAG, "found " + containers.size() + "containers and " + items.size() + " items" );
+									// didl.
 									
-									if (containers.size() > 0) {
-										Container container = containers.get(0);										
-										Log.i(LOG_TAG, container.getTitle() + " from " + device.getDetails().getFriendlyName());
+									Log.i(LOG_TAG, "found " + containers.size() + " containers and " + items.size() + " items" );
+									
+									for (Item item : items) {
+										
+										String uri = null;
+										
+										Log.i(LOG_TAG, item.getTitle() + " (" + item.getId() + ")");
+										for (Res ressource : item.getResources()) {
+											uri = ressource.getValue();
+											
+											Log.i(LOG_TAG, "	" + ressource.getValue());
+										}
+										
+										
+										// TEST
+										if (item.getTitle().equals("movie.avi")) {
+										
+											if (mediaRenderer != null && uri != null) {
+												sendToDMR(mediaRenderer, uri, "");
+												play(mediaRenderer, "0");
+												
+											}
+											
+										}
+										
 									}
-									else if (items.size() > 0) {
-										Item item = items.get(0);										
-										Log.i(LOG_TAG, item.getTitle() + " from " + device.getDetails().getFriendlyName());
+									
+									// browse all
+									for (Container container : containers) {										
+										browse( device, container.getId());
 									}
 							    }
 					
@@ -220,13 +254,13 @@ public class ClingWrapper {
 							    }
 					
 							    @Override
-							    public void failure(ActionInvocation invocation,
-							                        UpnpResponse operation,
-							                        String defaultMsg) {
+							    public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
 							        // Something wasn't right...
+							    	Log.d(LOG_TAG, "browse failure " + defaultMsg);
 							    }
 							};
 							
+							// starting browse request
 							simpleBrowseAction.setControlPoint(upnpService.getControlPoint()); 
 							simpleBrowseAction.run();
 					}
@@ -241,30 +275,103 @@ public class ClingWrapper {
 	private void browse2(Action getFiles, AndroidUpnpService upnpService) {
 		
         ActionInvocation mActionInvocation=new ActionInvocation(getFiles);
-                    mActionInvocation.setInput("ObjectID", "0");
-                    mActionInvocation.setInput("BrowseFlag", "BrowseDirectChildren");
-                    mActionInvocation.setInput("Filter", "*");
-                    mActionInvocation.setInput("StartingIndex", new UnsignedIntegerFourBytes(0));
-                    mActionInvocation.setInput("RequestedCount", new UnsignedIntegerFourBytes(2));
-                    mActionInvocation.setInput("SortCriteria", "+dc:title");
-                    ActionCallback mActionCallback=new ActionCallback(mActionInvocation) {
-                           
-                            @Override
-                            public void success(ActionInvocation actionInvocation) {
-                            	String result=actionInvocation.getOutput("Result").getValue().toString();
-                            	_Ctrl.show("browse2 success");
-                            	
-                            	Log.i("UPNP", result);
-                            	
-                            }
-                           
-                            @Override
-                            public void failure(ActionInvocation actionInvocation, UpnpResponse operation, String defaultMsg) {
-                            	_Ctrl.show("browse2 failure");
-                            }
-                    };
-                    upnpService.getControlPoint().execute(mActionCallback);
-            } 
+        mActionInvocation.setInput("ObjectID", "0");
+        mActionInvocation.setInput("BrowseFlag", "BrowseDirectChildren");
+        mActionInvocation.setInput("Filter", "*");
+        mActionInvocation.setInput("StartingIndex", new UnsignedIntegerFourBytes(0));
+        mActionInvocation.setInput("RequestedCount", new UnsignedIntegerFourBytes(2));
+        mActionInvocation.setInput("SortCriteria", "+dc:title");
+        ActionCallback mActionCallback=new ActionCallback(mActionInvocation) {
+               
+                @Override
+                public void success(ActionInvocation actionInvocation) {
+                	String result=actionInvocation.getOutput("Result").getValue().toString();
+                	_Ctrl.show("browse2 success");
+                	
+                	Log.i("UPNP", result);
+                	
+                }
+               
+                @Override
+                public void failure(ActionInvocation actionInvocation, UpnpResponse operation, String defaultMsg) {
+                	_Ctrl.show("browse2 failure");
+                }
+        };
+        upnpService.getControlPoint().execute(mActionCallback);
+   }
+	
+	 public void sendToDMR(Device device, String uri, String metadata) {
+		 
+		 Service avService = device.findService(avServiceId);
+		 
+         if (avService != null && upnpService != null) {
+                 ActionInvocation actionInvocation = new SetAVTransportURI(avService, "0", uri, metadata);
+
+                 upnpService.getControlPoint().execute(
+                                 new ActionCallback(actionInvocation) {
+
+                                         @Override
+                                         public void failure(ActionInvocation arg0,
+                                                         UpnpResponse arg1, String arg2) {
+
+                                                 Log.e(LOG_TAG, "Send UIR to DMR fail");
+                                                 Log.e(LOG_TAG, arg2);
+                                         }
+
+                                         @Override
+                                         public void success(ActionInvocation arg0) {
+                                        	 Log.i(LOG_TAG, "Send UIR to DMR success");
+                                         }
+                                 });
+	         }
+	 }
+
+	 public void play(Device device, String instanceID) {
+		 Service avService = device.findService(avServiceId);
+		 
+         if (avService != null && upnpService != null) {
+                 ActionInvocation actionInvocation = new Play(avService, instanceID);
+
+                 upnpService.getControlPoint().execute(
+                     new ActionCallback(actionInvocation) {
+
+                             @Override
+                             public void failure(ActionInvocation arg0,
+                                             UpnpResponse arg1, String arg2) {
+                                     Log.e(LOG_TAG, "play fail" + arg0.getFailure());
+                             }
+
+                             @Override
+                             public void success(ActionInvocation arg0) {
+                                     Log.i(LOG_TAG, "play success");
+                             }
+                     });
+	         }
+	 }
+	 
+     public void stop(Device device) {
+    	 
+    	 Service avService = device.findService(avServiceId);
+    	 
+         if (avService != null && upnpService != null) {
+                 ActionInvocation<Service> actionInvocation = new Stop(avService);
+                 upnpService.getControlPoint().execute(
+                     new ActionCallback(actionInvocation) {
+
+                             @Override
+                             public void failure(ActionInvocation arg0,
+                                             UpnpResponse arg1, String arg2) {
+                                     Log.e(LOG_TAG, arg0.getAction().getName() + " fail");
+                             }
+
+                             @Override
+                             public void success(ActionInvocation arg0) {
+                                     Log.e(LOG_TAG, arg0.getAction().getName() + " success");
+                             }
+                     });
+         }
+ }
+
 
 	
   // class SetAVTransportURI extends ActionInvocation {
@@ -277,7 +384,7 @@ public class ClingWrapper {
      * */
     protected class BrowseRegistryListener extends DefaultRegistryListener {
 
-    	/* start of optimization */
+    	/* start of optimization (disabled)
         @Override
         public void remoteDeviceDiscoveryStarted(Registry registry, RemoteDevice device) {
             // deviceAdded(device);
@@ -285,24 +392,24 @@ public class ClingWrapper {
 
         @Override
         public void remoteDeviceDiscoveryFailed(Registry registry, final RemoteDevice device, final Exception ex) {
-            
-        	// should log
             // "Discovery failed of '" + device.getDisplayString() + "': " + (ex != null ? ex.toString() : "Couldn't retrieve device/service descriptors"));
-            
         	// deviceRemoved(device);
         }
         /* End of optimization, you can remove the whole block if your Android handset is fast (>= 600 Mhz) */
 
         @Override
         public void remoteDeviceAdded(Registry registry, RemoteDevice device) {
-        	deviceAdded(device);
+        	Log.i(LOG_TAG, "remoteDeviceAdded : " + device.toString() + " " + device.getIdentity().getUdn().toString());
+        	updateDeviceList(device, false);
         }
 
         @Override
         public void remoteDeviceRemoved(Registry registry, RemoteDevice device) {
-            deviceRemoved(device);
+        	Log.i(LOG_TAG, "remoteDeviceRemoved : " + device.toString() + " " + device.getIdentity().getUdn().toString());
+        	updateDeviceList(device, true);
         }
 
+        /* local services
         @Override
         public void localDeviceAdded(Registry registry, LocalDevice device) {
             deviceAdded(device);
@@ -312,73 +419,86 @@ public class ClingWrapper {
         public void localDeviceRemoved(Registry registry, LocalDevice device) {
             deviceRemoved(device);
         }
+        */
 
-        public void deviceAdded(final Device device) {
+        public void updateDeviceList(final Device device, final boolean toRemove) {
         	
-        	Log.i(LOG_TAG, "deviceAdded : " + device.toString());
-        	
+        	// running in UI thread
         	_Ctrl.runOnUiThread(new Runnable() {
-        		public void run() {
-        			
-        			// _Ctrl.show("device.getType().toString() :  " + device.getType().toString());
+        		
+
+				
+
+				public void run() {
         			
         			if (device.getType().toString().equals(deviceTypeMediaServer))
         			{
-        				_Ctrl.show("MediaServer " + device.getServices().length  + " services");
-        				
         				browse(device, "0");
-        				
-//        				Service service = device.findService(new UDAServiceId("ContentDirectory"));
-//        				Action action = service.getAction("Browse");
-//        				browse2(action, upnpService);
-        				
-        				
-//        				for (Service service : device.getServices())
-//        				{
-//        					// _Ctrl.show("MediaServer : " + service.toString());
-//        					Log.i(LOG_TAG, "service : " + service.toString());
-//        					
-//        					for (Action action : service.getActions())
-//            				{
-//        						Log.i(LOG_TAG, "action : " + action.toString());
-//        						
-//        						if (action.toString().equals("Browse"))
-//        						{
-//        							//action.
-//        							
-//        						}
-//            				}
-//        				}
+        			}
+        			else if (device.getType().toString().equals(deviceTypeMediaRenderer))
+        			{
+        				mediaRenderer = device;
         			}
         			
-		            // _Ctrl.show("deviceAdded : " + device.toString());
-		            int position = deviceList.indexOf(device);
-		            if (position >= 0) {
-		                // Device already in the list, re-set new value at same position
-		                deviceList.remove(device);
-		                deviceList.add(position, device);
-		            } else {
-		                deviceList.add(device);
-		            }
-		            
+        			
+        			if (toRemove) {
+        				deviceList.remove(device);
+        			}
+        			else {// to add        			
+			            int position = deviceList.indexOf(device);
+			            if (position >= 0) {
+			                // Device already in the list, re-set new value at same position
+			                deviceList.remove(device);
+			                deviceList.add(position, device);
+			            } else {
+			                deviceList.add(device);
+			            }
+        			}
 		            // TODO do it in a better way
 		            _Ctrl.getJavascriptWrapper().sendDeviceList(deviceList);
         		}
         	});
         }
-
-        public void deviceRemoved(final Device device) {
-        	
-        	Log.i(LOG_TAG, "deviceRemoved : " + device.toString());
-        	
-        	_Ctrl.runOnUiThread(new Runnable() {
-        		public void run() {
-		        	deviceList.remove(device);
-		        	// TODO do it in a better way
-		        	_Ctrl.getJavascriptWrapper().sendDeviceList(deviceList);
-        		}
-        	});
-        }
     }
-	
+    
+    class SetAVTransportURI extends ActionInvocation {
+        public SetAVTransportURI(Service service, String instanceID,
+                        String uri, String metadata) {
+                super(service.getAction("SetAVTransportURI"));
+                try {
+                        setInput("CurrentURIMetaData", metadata);
+                        setInput("InstanceID", new UnsignedIntegerFourBytes(instanceID));
+                        setInput("CurrentURI", uri);
+                        Log.i(LOG_TAG, "URI value: " + uri);
+                } catch (Exception ex) {
+                        ex.printStackTrace();
+                }
+	        }
+	}
+    
+
+    class Play extends ActionInvocation {
+            public Play(Service service, String instanceID) {
+                    super(service.getAction("Play"));
+                    try {
+                            setInput("InstanceID", new UnsignedIntegerFourBytes(instanceID));
+                            setInput("Speed", "1");
+                    } catch (Exception ex) {
+                            ex.printStackTrace();
+                    }
+            }
+    }
+
+    class Stop extends ActionInvocation {
+            public Stop(Service service) {
+                    super(service.getAction("Stop"));
+                    try {
+                            setInput("InstanceID", new UnsignedIntegerFourBytes(0));
+                    } catch (Exception ex) {
+                            ex.printStackTrace();
+                    }
+            }
+    }
+
+
 }
