@@ -25,7 +25,8 @@ public class Dlna extends CordovaPlugin {
 	
 	private Controller _Ctrl;
 	
-    private CallbackContext callbackContext = null;
+    private CallbackContext devicesChangedCallback = null;
+	private CallbackContext browseDeviceCallback = null;
 	
 	public Dlna()
 	{
@@ -35,6 +36,11 @@ public class Dlna extends CordovaPlugin {
 		
 	}
 	
+	/**
+	 * 
+	 *	Called by Javascript 
+	 * 
+	 */
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
         
@@ -47,15 +53,15 @@ public class Dlna extends CordovaPlugin {
             this.echo(message, callbackContext);
             return true;
         }
-        else if (action.equals("start")) {
+        else if (action.equals("registerDeviceDiscovery")) {
         	
-        	if (this.callbackContext != null) {
-                callbackContext.error( "Already started");
+        	if (this.devicesChangedCallback != null) {
+                callbackContext.error( "registerDeviceDiscovery already registered");
                 return true;
             }
             
             // no result yet we keep the callback 
-        	this.callbackContext = callbackContext;
+        	this.devicesChangedCallback = callbackContext;
         	PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
             pluginResult.setKeepCallback(true);
             callbackContext.sendPluginResult(pluginResult);
@@ -65,13 +71,35 @@ public class Dlna extends CordovaPlugin {
         }
         else if (action.equals("stop")) {
         	this.stop();
-        	this.sendUpdate(new JSONObject(), false); // release status callback in JS side
-            this.callbackContext = null;
+        	this.sendDevicesUpdate(new JSONObject(), false); // release status callback in JS side
+            this.devicesChangedCallback = null;
             callbackContext.success();
             return true;
         }
         else if (action.equals("refresh")) {
-        	this.refresh();
+        	_Ctrl.getClingwrapper().refresh();
+        	return true;
+        }
+        else if (action.equals("registerBrowseDevice")) {
+        	if (this.browseDeviceCallback != null) {
+                callbackContext.error( "registerBrowseDevice already registered");
+                return true;
+            }
+            
+            // no result yet we keep the callback 
+        	this.browseDeviceCallback = callbackContext;
+        	PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
+            pluginResult.setKeepCallback(true);
+            callbackContext.sendPluginResult(pluginResult);
+            return true;
+        }
+        else if (action.equals("browseDevice")) {
+        	
+        	String deviceUdn = args.getString(0);
+        	String containerId = args.getString(1);
+        	
+        	_Ctrl.getClingwrapper().browse(deviceUdn, containerId);
+        	return true;
         }
         
         
@@ -132,35 +160,52 @@ public class Dlna extends CordovaPlugin {
 	private void refresh() {
 		_Ctrl.show("Refreshing ...");
 	}
-
-    /**
-     * use to send upnp devices to javascript by simply sending the list
-     * */
-	public void sendDeviceList(Object deviceList)
-	{
-		JSONObject devices = new JSONObject();
-		
-        try {	
-        	devices.put("devices", deviceList);
-        }
-		catch (JSONException e) {
-			Log.e(LOG_TAG, e.getMessage(), e);
-	    }
-        
-        sendUpdate(devices, true);
-	}
-		
+	
 	
 	/**
      * Create a new plugin result and send it back to JavaScript
      *
-     * @param connection the network info to set as navigator.connection
      */
-    private void sendUpdate(JSONObject info, boolean keepCallback) {
-        if (this.callbackContext != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK, info);
-            result.setKeepCallback(keepCallback);
-            this.callbackContext.sendPluginResult(result);
+	public void sendDevicesUpdate(Object deviceList, boolean keepCallback) {
+        if (this.devicesChangedCallback != null) {
+        	
+        	try {
+	        	JSONObject devices = new JSONObject();
+	        	devices.put("devices", deviceList);
+
+	            PluginResult result = new PluginResult(PluginResult.Status.OK, devices);
+	            result.setKeepCallback(keepCallback);
+	            this.devicesChangedCallback.sendPluginResult(result);
+	            
+        	}
+    		catch (Exception e) {
+    			Log.e(LOG_TAG, "sendDevicesUpdate " + e.getMessage(), e);
+    	    }
+        }
+    }
+    
+    
+	/**
+     * Create a new plugin result and send it back to JavaScript
+     *
+     */
+    public void sendBrowseUpdate(Object container, boolean keepCallback) {
+        if (this.browseDeviceCallback != null) {
+        	
+        	try {
+
+	        	JSONObject containerJson = new JSONObject();
+	        	containerJson.put("container", container);
+	        	
+	        	Log.e(LOG_TAG, "sendBrowseUpdate " + containerJson.toString());
+	        	
+	            PluginResult result = new PluginResult(PluginResult.Status.OK, containerJson);
+	            result.setKeepCallback(keepCallback);
+	            this.browseDeviceCallback.sendPluginResult(result);
+	        }
+    		catch (Exception e) {
+    			Log.e(LOG_TAG, "sendBrowseUpdate " + e.getMessage(), e);
+    	    }
         }
     }
 

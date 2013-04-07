@@ -150,7 +150,7 @@ public class ClingWrapper {
 	 * should restart the discover pocess
 	 * 
 	 */
-	private void refresh() {
+	public void refresh() {
 		if (upnpService == null) return;
         
         upnpService.getRegistry().removeAllRemoteDevices();
@@ -218,9 +218,10 @@ public class ClingWrapper {
 									List<Container> containers = didl.getContainers();
 									List<Item> items = didl.getItems();
 									
-									// didl.
-									
 									Log.i(LOG_TAG, "found " + containers.size() + " containers and " + items.size() + " items" );
+									
+									if (containers.size() > 0)
+										sendBrowseUpdate(containers.get(0));
 									
 									for (Item item : items) {
 										
@@ -234,6 +235,8 @@ public class ClingWrapper {
 										}
 										
 										
+										
+										
 										// TEST
 										// [www.Cpasbien.com] s8-rouille-xvid.cd2.avi (13)   http://192.168.1.3:49152/content/media/object_id/13/res_id/0/ext/file.avi
 										//
@@ -245,7 +248,7 @@ public class ClingWrapper {
 												//sendToDMR(mediaRenderer, uri, "");
 												//play(mediaRenderer, "0");
 												
-												playLocally(Uri.parse(uri));
+												// playLocally(Uri.parse(uri));
 												
 											}
 											
@@ -259,7 +262,9 @@ public class ClingWrapper {
 									}
 							    }
 					
-							    @Override
+							 
+
+								@Override
 							    public void updateStatus(Status status) {
 							        // Called before and after loading the DIDL content
 							    }
@@ -281,6 +286,22 @@ public class ClingWrapper {
 				Log.d(LOG_TAG, ee.getMessage(), ee);
 			}
 		}
+	}
+	
+   private void sendBrowseUpdate(final Container container) {
+	   
+	   _Ctrl.runOnUiThread(new Runnable() {
+			public void run() {
+				
+				try {
+					_Ctrl.getJavascriptWrapper().sendBrowseUpdate(container, true);
+				}
+				catch (Exception ee) {
+					Log.d(LOG_TAG, "sendBrowseUpdate " + ee.getMessage(), ee);
+				}
+			}
+	   });
+		
 	}
 	
 	private void browse2(Action getFiles, AndroidUpnpService upnpService) {
@@ -389,7 +410,7 @@ public class ClingWrapper {
     	// running in UI thread
      	_Ctrl.runOnUiThread(new Runnable() {
 				public void run() {
-    	 
+
     	 	MediaPlayer player = MediaPlayer.create(_Ctrl.getContext(), uri);
     	    player.setOnPreparedListener(new OnPreparedListener() { 
     	        @Override
@@ -487,7 +508,7 @@ public class ClingWrapper {
 			            }
         			}
 		            // TODO do it in a better way
-		            _Ctrl.getJavascriptWrapper().sendDeviceList(deviceList);
+		            _Ctrl.getJavascriptWrapper().sendDevicesUpdate(deviceList, true);
         		}
         	});
         }

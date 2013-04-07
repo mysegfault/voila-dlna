@@ -16,6 +16,9 @@ App.prototype.initialize = function() {
 	}
 };
 App.prototype.debug = function(text) {
+	
+	console.log("Debug### " + text);
+	
 	if (this.isAndroidEnv) {
 		var debugElement = document.getElementById('debug');
 		debugElement.value = (debugElement.value + "\n" + text);
@@ -51,11 +54,23 @@ App.prototype.initNativeCode = function() {
 		}, "Dlna", "echo", [str]);
 	};
 	
-	// start upnp plugin
-	cordova.exec(this._onUpnpEvent, this._onUpnpError, "Dlna", "start", []);
+	// registers to upnp devices changed event and start a discovery
+	cordova.exec(this._onDevicesChanged, this._onCordovaError, "Dlna", "registerDeviceDiscovery", []);
+	
+	// register browse medias event
+	cordova.exec(this._onBrowseDevice, this._onCordovaError, "Dlna", "registerBrowseDevice", []);
+	
 	
 	this.debug('Native code plugin "Dlna" registred.');
 };
+
+/**
+ * Browse request
+ * */
+App.prototype.Browse = function(deviceUdn, containerId) {
+	// register browse medias event
+	cordova.exec(this._onBrowseDevice /* async no need to callback */, this._onCordovaError, "Dlna", "browseDevice", [deviceUdn, containerId]);
+}
 
 
 /**
@@ -66,22 +81,42 @@ App.prototype.initNativeCode = function() {
  * @param devices list, JSON object sent by java
  *
  * */
-App.prototype._onUpnpEvent = function(devices) {
+App.prototype._onDevicesChanged = function(devices) {
 	
 	if (devices) {
 		
 		var that = window.App;
 		var devicesStr = JSON.stringify(devices , null, 4)
 		
-		that.debug("_onUpnpEvent : " + devicesStr);
-		document.getElementById('deviceready').innerHTML = devicesStr;
+		that.debug("_onDevicesChanged : " + devicesStr);
+	}
+}
+
+/**
+ * 	call by java when a upnp browse request has arrived
+ * 
+ * @param devices list, JSON object sent by java
+ *
+ * */
+App.prototype._onBrowseDevice = function(container) {
+	
+	console.log(container);
+	
+	if (container) {
+		
+		var that = window.App;
+		var containerStr = JSON.stringify(container , null, 4)
+		
+		that.debug("_onBrowseDevice : " + containerStr);
 		
 	}
 }
+
+
 /**
  *	  Error from cordova plugin
  * */
-App.prototype._onUpnpError = function(e) {
+App.prototype._onCordovaError = function(e) {
 	var that = window.App;
 	that.debug('_onError : ' + e);
 }
