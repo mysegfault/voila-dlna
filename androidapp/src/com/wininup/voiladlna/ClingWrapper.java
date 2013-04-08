@@ -200,28 +200,27 @@ public class ClingWrapper {
 	 * @param device	device to browse
 	 * @param id		"0" is root
 	 */
-	private void browse(final Device device, final String id){
+	private void browse(final Device device, final String containerId){
 		
 		if (device != null)
 		{
-			Log.i(LOG_TAG, "browsing id " + id + " on " + device.getDisplayString() + " " + device.getIdentity().getUdn().toString());
+			Log.i(LOG_TAG, "browsing id " + containerId + " on " + device.getDisplayString() + " " + device.getIdentity().getUdn().toString());
 			try {
 				new Thread(new Runnable() {
 					@Override
 					public void run() {
 							Service service = device.findService(contentDirectoryServiceId);
-							ActionCallback simpleBrowseAction = new Browse(service, id, BrowseFlag.DIRECT_CHILDREN) {
+							ActionCallback simpleBrowseAction = new Browse(service, containerId, BrowseFlag.DIRECT_CHILDREN) {
 
 								@Override
 							    public void received(ActionInvocation actionInvocation, DIDLContent didl) {
 					
+									sendBrowseUpdate(didl, containerId, device.getIdentity().getUdn().toString());
+									
 									List<Container> containers = didl.getContainers();
 									List<Item> items = didl.getItems();
 									
 									Log.i(LOG_TAG, "found " + containers.size() + " containers and " + items.size() + " items" );
-									
-									if (containers.size() > 0)
-										sendBrowseUpdate(containers.get(0));
 									
 									for (Item item : items) {
 										
@@ -256,10 +255,12 @@ public class ClingWrapper {
 										
 									}
 									
-									// browse all
+									
+									/*// browse ALL
 									for (Container container : containers) {										
 										browse( device, container.getId());
-									}
+									}*/
+									
 							    }
 					
 							 
@@ -288,13 +289,13 @@ public class ClingWrapper {
 		}
 	}
 	
-   private void sendBrowseUpdate(final Container container) {
+   private void sendBrowseUpdate(final DIDLContent didl, final String containerId, final String deviceId) {
 	   
 	   _Ctrl.runOnUiThread(new Runnable() {
 			public void run() {
 				
 				try {
-					_Ctrl.getJavascriptWrapper().sendBrowseUpdate(container, true);
+					_Ctrl.getJavascriptWrapper().sendBrowseUpdate(didl, containerId, deviceId, true);
 				}
 				catch (Exception ee) {
 					Log.d(LOG_TAG, "sendBrowseUpdate " + ee.getMessage(), ee);
