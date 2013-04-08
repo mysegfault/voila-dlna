@@ -1,4 +1,4 @@
-voila-dnla
+voila-dlna
 ==========
 
 1.  Javascript Sources
