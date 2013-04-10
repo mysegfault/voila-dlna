@@ -4,6 +4,6 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
-	<classpathentry kind="lib" path="/home/tibo/Documents/dev/android/app/voila-dlna-cling/androidapp/libs/teleal-common-1.0.13.jar"/>
+	<classpathentry kind="lib" path="libs/teleal-common-1.0.13.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

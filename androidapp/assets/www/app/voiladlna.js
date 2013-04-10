@@ -70,7 +70,7 @@ App.prototype.initNativeCode = function() {
 App.prototype.Browse = function(deviceUdn, containerId) {
 	// register browse medias event
 	cordova.exec(this._onBrowseDevice /* async, no need to callback */, this._onCordovaError, "Dlna", "browseDevice", [deviceUdn, containerId]);
-}
+};
 
 /**
  * Play uri request   play file on the remote device specified
@@ -78,7 +78,7 @@ App.prototype.Browse = function(deviceUdn, containerId) {
 App.prototype.PlayUri = function(deviceUdn, uri) {
 	// register browse medias event
 	cordova.exec(this._onBrowseDevice /* async, no need to callback */, this._onCordovaError, "Dlna", "playUri", [deviceUdn, uri]);
-}
+};
 
 /**
  * "_" prefix means that this method is called from java cordova plugin
@@ -93,11 +93,11 @@ App.prototype._onDevicesChanged = function(devices) {
 	if (devices) {
 		
 		var that = window.App;
-		var devicesStr = JSON.stringify(devices , null, 4)
+		var devicesStr = JSON.stringify(devices , null, 4);
 		
 		that.debug("_onDevicesChanged : " + devicesStr);
 	}
-}
+};
 
 /**
  * 	call by java when a upnp browse request has arrived
@@ -112,12 +112,12 @@ App.prototype._onBrowseDevice = function(container) {
 	if (container) {
 		
 		var that = window.App;
-		var containerStr = JSON.stringify(container , null, 4)
+		var containerStr = JSON.stringify(container , null, 4);
 		
 		that.debug("_onBrowseDevice : " + containerStr);
 		
 	}
-}
+};
 
 
 /**
@@ -126,7 +126,7 @@ App.prototype._onBrowseDevice = function(container) {
 App.prototype._onCordovaError = function(e) {
 	var that = window.App;
 	that.debug('_onError : ' + e);
-}
+};
 
 App.prototype.UpdateReadyGui = function() {
 	try {
