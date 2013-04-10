@@ -69,9 +69,16 @@ App.prototype.initNativeCode = function() {
  * */
 App.prototype.Browse = function(deviceUdn, containerId) {
 	// register browse medias event
-	cordova.exec(this._onBrowseDevice /* async no need to callback */, this._onCordovaError, "Dlna", "browseDevice", [deviceUdn, containerId]);
+	cordova.exec(this._onBrowseDevice /* async, no need to callback */, this._onCordovaError, "Dlna", "browseDevice", [deviceUdn, containerId]);
 }
 
+/**
+ * Play uri request   play file on the remote device specified
+ * */
+App.prototype.PlayUri = function(deviceUdn, uri) {
+	// register browse medias event
+	cordova.exec(this._onBrowseDevice /* async, no need to callback */, this._onCordovaError, "Dlna", "playUri", [deviceUdn, uri]);
+}
 
 /**
  * "_" prefix means that this method is called from java cordova plugin

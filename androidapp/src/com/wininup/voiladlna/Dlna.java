@@ -110,6 +110,14 @@ public class Dlna extends CordovaPlugin {
         	_Ctrl.getClingwrapper().browse(deviceUdn, containerId);
         	return true;
         }
+        else if (action.equals("playUri")) {
+        	
+        	String deviceUdn = args.getString(0);
+        	String uri = args.getString(1);
+        	
+        	_Ctrl.getClingwrapper().playUri(deviceUdn, uri, "");
+        	return true;
+        }
         
         
         return false;
@@ -117,14 +125,14 @@ public class Dlna extends CordovaPlugin {
 
     
     /**
-     * Stop battery receiver.
+     * 
      */
     public void onDestroy() {
     	this.stop();
     }
 
     /**
-     * Stop battery receiver.
+     * 
      */
     public void onReset() {
     	this.stop();
@@ -174,7 +182,7 @@ public class Dlna extends CordovaPlugin {
 	/**
      * Create a networkService object and send it to JavaScript
      *
-     * navigator.getNetworkServices callback
+     * 
      *
      */
 	public void sendDevicesUpdate(List<Device> deviceList, boolean keepCallback) {
@@ -185,21 +193,7 @@ public class Dlna extends CordovaPlugin {
         		
         		if (deviceList != null)
         		{	        	
-        			JSONArray jsDevices = new JSONArray();
-    	        	
-		        	for (Device device : deviceList) {
-		        		JSONObject jsDevice = new JSONObject();
-		        		jsDevice.put("id", device.getIdentity().getUdn().toString());
-		        		jsDevice.put("name", device.getDetails().getFriendlyName());
-        				jsDevice.put("type", "upnp:" + device.getType().toString()); // prefixing "upnp:" to comply w3c
-						jsDevice.put("url", "config url"); // device.getType().getNamespace(), // device.getDetails().getBaseURL().toString(), // control url to define
-						jsDevice.put("config", "config ?");
-						jsDevice.put("online", true);
-		        		
-		        		jsDevices.put(jsDevice);
-		        	}
-		        	
-		        	jsObject.put("networkServices", jsDevices);
+        			createJsUpnpDevices(deviceList, jsObject);
         		}
         		
 	            PluginResult result = new PluginResult(PluginResult.Status.OK, jsObject);
@@ -215,53 +209,21 @@ public class Dlna extends CordovaPlugin {
     
     
 	/**
-     * Create a new plugin result and send it back to JavaScript
-	 * @param deviceId 
-	 * @param containerId 
+     * Sending UPNP media server container to JavaScript
+     * 
+     * @param didl 	container from Cling ContentDirectory Browse Action 
+	 * @param 		deviceId 
+	 * @param 		containerId
+	 * @param		true to continue to Call Browse callback
      *
      */
     public void sendBrowseUpdate(DIDLContent didl, String containerId, String deviceId, boolean keepCallback) {
         if (this.browseDeviceCallback != null) {
-        	
-        	JSONObject jsContainer = new JSONObject();
-        	
         	try {
-            	
-            		
+        		JSONObject jsContainer = new JSONObject();	
             	if (didl != null) {
-
-            		JSONArray containers = new JSONArray();
-            		JSONArray items = new JSONArray();
-            		
-            		jsContainer.put("id", containerId);
-            		jsContainer.put("deviceId", deviceId);
-            		
-            		// items
-            		for (Item item : didl.getItems()) {
-            			JSONObject jsItem = new JSONObject();
-            			jsItem.put("id", item.getId());
-            			jsItem.put("name", item.getTitle());
-            			jsItem.put("uri", "TODO uri");
-            			jsItem.put("encoding", "TODO encoding");
-            			
-            			items.put(jsItem);
-            		}
-            		jsContainer.put("items", items);
-            		
-            		// containers  @todo use recursive call to populate tree
-            		for (Container container : didl.getContainers()) {
-            			
-            			JSONObject tmpContainer = new JSONObject();
-            			tmpContainer.put("id", container.getId());
-            			tmpContainer.put("name", container.getTitle());
-            			tmpContainer.put("containersCount", container.getContainers().size());
-            			tmpContainer.put("itemsCount", container.getItems().size());
-            			
-            			containers.put(tmpContainer);
-            		}
-            		jsContainer.put("containers", containers);
+            		createJsBrowseContainer(didl, containerId, deviceId, jsContainer);
             	}
-	        	
 	            PluginResult result = new PluginResult(PluginResult.Status.OK, jsContainer);
 	            result.setKeepCallback(keepCallback);
 	            this.browseDeviceCallback.sendPluginResult(result);
@@ -272,65 +234,69 @@ public class Dlna extends CordovaPlugin {
         }
     }
     
-    class NetworkService
+    /**
+     * 
+     * creates a JSON object describing a UPNP devices array
+     * 
+     * using w3c format for navigator.getNetworkServices callback
+     * Phonegap seems to can not send JSONarray to js code  (JSONObject mandatory ?)
+     * 
+     * */
+    private void createJsUpnpDevices(List<Device> deviceList, JSONObject jsObject) throws JSONException
     {
+    	JSONArray jsDevices = new JSONArray();
     	
-    	public String    id;
-    	public String    name;
-    	public String    type;
-    	public String    url;
-    	public String    config;
-    	public boolean   online;
+    	for (Device device : deviceList) {
+    		JSONObject jsDevice = new JSONObject();
+    		jsDevice.put("id", device.getIdentity().getUdn().toString());
+    		jsDevice.put("name", device.getDetails().getFriendlyName());
+			jsDevice.put("type", "upnp:" + device.getType().toString()); // prefixing "upnp:" to comply w3c
+			jsDevice.put("url", "config url"); // device.getType().getNamespace(), // device.getDetails().getBaseURL().toString(), // control url to define
+			jsDevice.put("config", "config ?");
+			jsDevice.put("online", true);
+    		
+    		jsDevices.put(jsDevice);
+    	}
     	
-    	/// @todo	iconsUri
-    	// String[]	iconsUri;
-    	
-		public NetworkService(String id, String name, String type, String url, String config, boolean online) {
-			super();
-			this.id = id;
-			this.name = name;
-			this.type = type;
-			this.url = url;
-			this.config = config;
-			this.online = online;
-		}
+    	jsObject.put("networkServices", jsDevices);
     }
     
-    class ContentDirectoryContainer
+    /**
+     * 
+     * creates a JSON object describing a media server container
+     * 
+     * */
+    private void createJsBrowseContainer(DIDLContent didl, String containerId, String deviceId, JSONObject jsContainer) throws JSONException
     {
-    	
-    	public String   id;
-    	public String 	name;
-    	public int		itemsCount;
-    	public int		containersCount;
-    	
-		public ContentDirectoryContainer(String id, String name, int itemsCount, int containersCount) {
-			super();
-			this.id = id;
-			this.name = name;
-			this.itemsCount = itemsCount;
-			this.containersCount = containersCount;
+    	JSONArray containers = new JSONArray();
+		JSONArray items = new JSONArray();
+		
+		jsContainer.put("id", containerId);
+		jsContainer.put("deviceId", deviceId);
+		
+		// items
+		for (Item item : didl.getItems()) {
+			JSONObject jsItem = new JSONObject();
+			jsItem.put("id", item.getId());
+			jsItem.put("name", item.getTitle());
+			jsItem.put("uri", "TODO uri");
+			jsItem.put("encoding", "TODO encoding");
+			
+			items.put(jsItem);
 		}
-    	
-    	
-    	
-    }
-    
-    class ContentDirectoryItem
-    {
-    	public String   id;
-    	public String 	name;
-    	public String   url;
-    	public String   encoding;
-    	
-		public ContentDirectoryItem(String id, String name, String url, String encoding) {
-			super();
-			this.id = id;
-			this.name = name;
-			this.url = url;
-			this.encoding = encoding;
+		jsContainer.put("items", items);
+		
+		// containers  @todo use recursive call to populate tree
+		for (Container container : didl.getContainers()) {
+			
+			JSONObject tmpContainer = new JSONObject();
+			tmpContainer.put("id", container.getId());
+			tmpContainer.put("name", container.getTitle());
+			tmpContainer.put("containersCount", container.getContainers().size());
+			tmpContainer.put("itemsCount", container.getItems().size());
+			
+			containers.put(tmpContainer);
 		}
-    	
-    	
+		jsContainer.put("containers", containers);
     }
 }

@@ -244,7 +244,7 @@ public class ClingWrapper {
 										if (item.getTitle().equals("01 Adieu tristesse.mp3")) {
 										
 											if (mediaRenderer != null && uri != null) {
-												//sendToDMR(mediaRenderer, uri, "");
+												
 												//play(mediaRenderer, "0");
 												
 												// playLocally(Uri.parse(uri));
@@ -289,6 +289,7 @@ public class ClingWrapper {
 		}
 	}
 	
+
    private void sendBrowseUpdate(final DIDLContent didl, final String containerId, final String deviceId) {
 	   
 	   _Ctrl.runOnUiThread(new Runnable() {
@@ -333,30 +334,32 @@ public class ClingWrapper {
         upnpService.getControlPoint().execute(mActionCallback);
    }
 	
-	 public void sendToDMR(Device device, String uri, String metadata) {
+	 public void playUri(String deviceId, String uri, String metadata) {
 		 
+		 try {
+		 
+		 Device device = findDevice(deviceId);
 		 Service avService = device.findService(avServiceId);
 		 
          if (avService != null && upnpService != null) {
                  ActionInvocation actionInvocation = new SetAVTransportURI(avService, "0", uri, metadata);
 
-                 upnpService.getControlPoint().execute(
-                                 new ActionCallback(actionInvocation) {
-
-                                         @Override
-                                         public void failure(ActionInvocation arg0,
-                                                         UpnpResponse arg1, String arg2) {
-
-                                                 Log.e(LOG_TAG, "Send UIR to DMR fail");
-                                                 Log.e(LOG_TAG, arg2);
-                                         }
-
-                                         @Override
-                                         public void success(ActionInvocation arg0) {
-                                        	 Log.i(LOG_TAG, "Send UIR to DMR success");
-                                         }
-                                 });
+                 upnpService.getControlPoint().execute(new ActionCallback(actionInvocation) {
+                                     @Override
+                                     public void failure(ActionInvocation arg0, UpnpResponse response, String arg2) {
+                                         Log.e(LOG_TAG, "playUri failed " + response.toString() + " " + arg2);
+                                     }
+                                     @Override
+                                     public void success(ActionInvocation arg0) {
+                                    	 Log.i(LOG_TAG, "playUri success");
+                                     }
+                             });
 	         }
+		 }
+		 catch (Exception ee) {
+			 Log.i(LOG_TAG, "playUri exception", ee);
+		 }
+		 
 	 }
 
 	 public void play(Device device, String instanceID) {
