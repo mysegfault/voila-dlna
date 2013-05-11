@@ -439,10 +439,11 @@ public class ClingWrapper {
         	_Ctrl.runOnUiThread(new Runnable() {
 				public void run() {
         			
-//        			if (device.getType().toString().equals(deviceTypeMediaServer))
-//        			{
-//        				browse(device, "0");
-//        			}
+        			if (device.getType().toString().equals(deviceTypeMediaServer))
+        			{
+        				// browse(device, "0");
+        				Log.i(LOG_TAG, "mediaserver " + device);
+        			}
         			
         			if (toRemove) {
         				deviceList.remove(device);
