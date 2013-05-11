@@ -4,33 +4,27 @@
 		<meta charset="utf-8">
 		<title>Voila DLNA</title>
 
-		<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"> 
+		<meta name="viewport" content="width=device-width, target-densitydpi=device-dpi">
+		<!--user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1,--> 
 		<!-- height=device-height -->
 		<!-- target-densitydpi=device-dpi -->
 		<!--<meta name="viewport" content="width=device-width, initial-scale=1">--> 
-		<meta name="format-detection" content="telephone=no">
+		<!--<meta name="format-detection" content="telephone=no">-->
 
 		<!--<link rel="stylesheet" href="jquerymobile/jquerymobile.css" />-->
 		<link rel="stylesheet" href="components/voiladlna/css/voiladlna.css" />
 
 		<script data-main="components/voiladlna/js/main" src="components/requirejs/require.js"></script>
-
 	</head>
 	<body>
 
-		<textarea id="debug" class="display-none">-- Debug Infos ---</textarea>
+		<div id="debug" class="display-none">-- Debug Infos ---</div>
 
-		<article id="devices">
+		<article>
 			<h1>Voila DLNA</h1> 
 			<p id="deviceready">Waiting...</p>
-
-<!--			<nav>
-				<ul>
-					<li><a href="#devices" class="ui-btn-active ui-state-persist">Devices</a></li>
-					<li><a href="#library">Library</a></li>
-					<li><a href="#playlist">Playlist</a></li>
-				</ul>
-			</nav>-->
+			
+			<div id="devices"></div>
 		</article>
 
 		<article id="library" class="display-none">

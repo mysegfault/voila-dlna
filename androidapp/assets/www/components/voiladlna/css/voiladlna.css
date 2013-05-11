@@ -5,18 +5,48 @@
 
 body {
 	background-color: red;
+	margin: 20px;
+	padding: 0;
+	font-size: 16px;
 }
 
 #debug {
 	color: black;
-	font-size: .6em;
+	font-size: .4em;
 	position: absolute;
-	border: 1px solid red;
-	bottom: 10%;
+	border: 1px solid grey;
+	bottom: 10px;
 	width: 90%;
-	height: 40%;
+	max-height: 30%;
+	overflow: scroll;
+	background-color: white;
 }
 
 .display-none {
 	display: none;
+}
+
+.device {
+	border-radius: 200px;
+	border: 1px solid black;
+	width: 40%;
+	height: 20%;
+	background-color: orange;
+	color: white;
+	text-align: center;
+	margin: 10px 20px;
+	padding: 10px;
+	display: inline-block;
+}
+.device-type-unknown {
+	background-color: blue;
+}
+.device-type-server {
+	background-color: orange;
+}
+.device-type-rendered {
+	background-color: hotpink;
+}
+.device-type-gateway {
+	background-color: lightgray;
 }

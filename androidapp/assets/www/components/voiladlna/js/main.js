@@ -3,7 +3,8 @@
 	var now = new Date().getTime();
 	var deps = [
 		"components/jquery/jquery.js?" + now,
-		"components/voiladlna/js/voiladlna.js?" + now
+		"components/voiladlna/js/voiladlna.js?" + now,
+		"components/voiladlna/js/gui.js?" + now
 	];
 	require(deps, function() {
 		window.App = new App();

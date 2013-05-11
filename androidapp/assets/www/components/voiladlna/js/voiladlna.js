@@ -20,8 +20,10 @@ App.prototype.initialize = function() {
 App.prototype.debug = function(text) {
 
 	if (this.isAndroidEnv) {
-		var debugElement = document.getElementById('debug');
-		debugElement.value = (debugElement.value + "\n" + text);
+		if (typeof text !== 'string') {
+			text = JSON.stringify(text);
+		}
+		$('#debug').html($('#debug').html() + "<pre>" + text + "</pre>");
 	}
 	else {
 		console.log("# " + text);
@@ -29,7 +31,7 @@ App.prototype.debug = function(text) {
 };
 // "__" prefix means that this method is called in the "window" context
 App.prototype.__onDeviceReady = function() {
-	App.debug("__onDeviceReady");
+//	App.debug("__onDeviceReady");
 	App.initNativeCode();
 	App.MainApp();
 };
@@ -39,18 +41,16 @@ App.prototype.__onDeviceReady = function() {
  * */
 App.prototype.initNativeCode = function() {
 
-	this.debug('initNativeCode, this.isAndroidEnv ' + this.isAndroidEnv);
-
 	if (!this.isAndroidEnv) {
 		return;
 	}
 
 	// echo function to test
-	window.echo = function(str, callback) {
-		cordova.exec(callback, function(err) {
-			callback('Nothing to echo.');
-		}, "Dlna", "echo", [str]);
-	};
+//	window.echo = function(str, callback) {
+//		cordova.exec(callback, function(err) {
+//			callback('Nothing to echo.');
+//		}, "Dlna", "echo", [str]);
+//	};
 
 	// registers to upnp devices changed event and start a discovery
 	cordova.exec(this._onDevicesChanged, this._onCordovaError, "Dlna", "registerDeviceDiscovery", []);
@@ -86,10 +86,20 @@ App.prototype.PlayUri = function(deviceUdn, uri) {
  *
  * */
 App.prototype._onDevicesChanged = function(devices) {
+	App.debug('onDevicesChanged!');
+//	App.debug(JSON.stringify(devices));
 
-	if (devices) {
-		var devicesStr = JSON.stringify(devices, null, 4);
-		App.debug("_onDevicesChanged : " + devicesStr);
+	if (!devices || !devices.networkServices) {
+		App.debug('Invalid content for onDevicesChanged.');
+		return;
+	}
+//		navigator.notification.vibrate(0);
+//	navigator.notification.beep(1);
+
+	App.debug(devices.networkServices);
+	for (var i in devices.networkServices) {
+		App.debug(devices.networkServices[i]);
+		Gui.addDevice(devices.networkServices[i]);
 	}
 };
 
@@ -127,7 +137,7 @@ App.prototype.UpdateReadyGui = function() {
 	if (this.isAndroidEnv) {
 		text = 'Connected!';
 	}
-	$('#deviceready').text(text);	
+	$('#deviceready').text(text);
 };
 App.prototype.MainApp = function() {
 	this.debug('-- Run Main Application Code --');
@@ -135,33 +145,10 @@ App.prototype.MainApp = function() {
 	this.UpdateReadyGui();
 
 	try {
-		if (this.isAndroidEnv) {
-
-			this.debug('window.echo("Yahoo !!!" ... ');
-
-			window.echo("Yahoo !!!", function(echoValue) {
-				console.log(echoValue);
-				that.debug(echoValue);
-			});
-		}
-	}
-	catch (err) {
-		console.log(err.message);
-	}
-
-	try {
-		if (this.isAndroidEnv) {
-			navigator.notification.beep(1);
-		}
-	}
-	catch (err) {
-		console.log(err.message);
-	}
-
-	try {
-		if (this.isAndroidEnv) {
-			navigator.notification.vibrate(0);
-		}
+//		window.echo("Yahoo !!!", function(echoValue) {
+//			console.log(echoValue);
+//			that.debug(echoValue);
+//		});
 	}
 	catch (err) {
 		console.log(err.message);
