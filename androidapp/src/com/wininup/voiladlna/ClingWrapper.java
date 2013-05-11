@@ -75,7 +75,6 @@ public class ClingWrapper {
 	
 	private AndroidUpnpService upnpService;
 	private List<Device> deviceList;
-	private Device mediaRenderer;
 	
 	private BrowseRegistryListener registryListener = new BrowseRegistryListener();
 	private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -214,56 +213,8 @@ public class ClingWrapper {
 
 								@Override
 							    public void received(ActionInvocation actionInvocation, DIDLContent didl) {
-					
 									sendBrowseUpdate(didl, containerId, device.getIdentity().getUdn().toString());
-									
-									List<Container> containers = didl.getContainers();
-									List<Item> items = didl.getItems();
-									
-									Log.i(LOG_TAG, "found " + containers.size() + " containers and " + items.size() + " items" );
-									
-									for (Item item : items) {
-										
-										String uri = null;
-										
-										Log.i(LOG_TAG, item.getTitle() + " (" + item.getId() + ")");
-										for (Res ressource : item.getResources()) {
-											uri = ressource.getValue();
-											
-											Log.i(LOG_TAG, "	" + ressource.getValue());
-										}
-										
-										
-										
-										
-										// TEST
-										// [www.Cpasbien.com] s8-rouille-xvid.cd2.avi (13)   http://192.168.1.3:49152/content/media/object_id/13/res_id/0/ext/file.avi
-										//
-										// 01 Adieu tristesse.mp3
-										//
-										if (item.getTitle().equals("01 Adieu tristesse.mp3")) {
-										
-											if (mediaRenderer != null && uri != null) {
-												
-												//play(mediaRenderer, "0");
-												
-												// playLocally(Uri.parse(uri));
-												
-											}
-											
-										}
-										
-									}
-									
-									
-									/*// browse ALL
-									for (Container container : containers) {										
-										browse( device, container.getId());
-									}*/
-									
 							    }
-					
-							 
 
 								@Override
 							    public void updateStatus(Status status) {
@@ -488,15 +439,10 @@ public class ClingWrapper {
         	_Ctrl.runOnUiThread(new Runnable() {
 				public void run() {
         			
-        			if (device.getType().toString().equals(deviceTypeMediaServer))
-        			{
-        				browse(device, "0");
-        			}
-        			else if (device.getType().toString().equals(deviceTypeMediaRenderer))
-        			{
-        				mediaRenderer = device;
-        			}
-        			
+//        			if (device.getType().toString().equals(deviceTypeMediaServer))
+//        			{
+//        				browse(device, "0");
+//        			}
         			
         			if (toRemove) {
         				deviceList.remove(device);
