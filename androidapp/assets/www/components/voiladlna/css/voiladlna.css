@@ -1,0 +1,22 @@
+/* Workaround for fixing transitions */
+.ui-page {
+	-webkit-backface-visibility: hidden;
+}
+
+body {
+	background-color: red;
+}
+
+#debug {
+	color: black;
+	font-size: .6em;
+	position: absolute;
+	border: 1px solid red;
+	bottom: 10%;
+	width: 90%;
+	height: 40%;
+}
+
+.display-none {
+	display: none;
+}

@@ -1,4 +1,0 @@
-/* Workaround for fixing transitions */
-.ui-page {
-	-webkit-backface-visibility: hidden;
-}

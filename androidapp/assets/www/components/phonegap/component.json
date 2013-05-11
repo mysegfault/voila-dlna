@@ -1,0 +1,8 @@
+{
+  "name": "phonegap",
+  "version": "2.5.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/phonegap/phonegap.git"
+  }
+}
