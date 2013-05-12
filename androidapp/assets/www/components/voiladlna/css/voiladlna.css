@@ -38,13 +38,18 @@ body {
 	padding: 10px;
 	display: inline-block;
 }
+.device.touched {
+	font-weight: bold;
+	background-color: lightslategrey;
+	color: black;
+}
 .device-type-unknown {
 	background-color: blue;
 }
 .device-type-server {
 	background-color: orange;
 }
-.device-type-rendered {
+.device-type-renderer {
 	background-color: hotpink;
 }
 .device-type-gateway {

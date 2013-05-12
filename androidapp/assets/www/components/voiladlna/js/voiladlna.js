@@ -21,7 +21,11 @@ App.prototype.debug = function(text) {
 
 	if (this.isAndroidEnv) {
 		if (typeof text !== 'string') {
-			text = JSON.stringify(text);
+			try {
+				text = JSON.stringify(text);
+			}
+			catch (e) {
+			}
 		}
 		$('#debug').html($('#debug').html() + "<pre>" + text + "</pre>");
 	}
@@ -59,12 +63,14 @@ App.prototype.initNativeCode = function() {
 	cordova.exec(this._onBrowseDevice, this._onCordovaError, "Dlna", "registerBrowseDevice", []);
 
 	this.debug('Native code plugin "Dlna" registred.');
+//	navigator.notification.vibrate(0);
+//	navigator.notification.beep(1);
 };
 
 /**
  * Browse request
  * */
-App.prototype.Browse = function(deviceUdn, containerId) {
+App.prototype.browse = function(deviceUdn, containerId) {
 	// register browse medias event
 	cordova.exec(this._onBrowseDevice /* async, no need to callback */, this._onCordovaError, "Dlna", "browseDevice", [deviceUdn, containerId]);
 };
@@ -72,7 +78,7 @@ App.prototype.Browse = function(deviceUdn, containerId) {
 /**
  * Play uri request   play file on the remote device specified
  * */
-App.prototype.PlayUri = function(deviceUdn, uri) {
+App.prototype.playUri = function(deviceUdn, uri) {
 	// register browse medias event
 	cordova.exec(this._onBrowseDevice /* async, no need to callback */, this._onCordovaError, "Dlna", "playUri", [deviceUdn, uri]);
 };
@@ -87,18 +93,14 @@ App.prototype.PlayUri = function(deviceUdn, uri) {
  * */
 App.prototype._onDevicesChanged = function(devices) {
 	App.debug('onDevicesChanged!');
-//	App.debug(JSON.stringify(devices));
 
 	if (!devices || !devices.networkServices) {
 		App.debug('Invalid content for onDevicesChanged.');
 		return;
 	}
-//		navigator.notification.vibrate(0);
-//	navigator.notification.beep(1);
 
-	App.debug(devices.networkServices);
+//	App.debug(devices.networkServices);
 	for (var i in devices.networkServices) {
-		App.debug(devices.networkServices[i]);
 		Gui.addDevice(devices.networkServices[i]);
 	}
 };
@@ -110,26 +112,20 @@ App.prototype._onDevicesChanged = function(devices) {
  *
  * */
 App.prototype._onBrowseDevice = function(container) {
-
-	console.log(container);
+	App.debug('onBrowseDevice!');
+	
+	App.debug(container);
 
 	if (container) {
-
-		var that = window.App;
-		var containerStr = JSON.stringify(container, null, 4);
-
-		that.debug("_onBrowseDevice : " + containerStr);
-
+//		App.debug("_onBrowseDevice : " + container);
 	}
 };
-
 
 /**
  *	  Error from cordova plugin
  * */
 App.prototype._onCordovaError = function(e) {
-	var that = window.App;
-	that.debug('_onCordovaError : ' + e);
+	App.debug('_onCordovaError : ' + e);
 };
 
 App.prototype.UpdateReadyGui = function() {
@@ -143,14 +139,17 @@ App.prototype.MainApp = function() {
 	this.debug('-- Run Main Application Code --');
 
 	this.UpdateReadyGui();
-
-	try {
-//		window.echo("Yahoo !!!", function(echoValue) {
-//			console.log(echoValue);
-//			that.debug(echoValue);
-//		});
+	
+	// simulate
+	if (!this.isAndroidEnv) {
+		var data = {
+			networkServices: [
+				{id: 'a', type: 'MediaServer', name:'MediaServer'},
+				{id: 'b', type: 'MediaRenderer', name:'MediaRenderer'},
+				{id: 'c', type: 'Gateway', name:'Gateway'}
+			]
+		};
+		App._onDevicesChanged(data);
 	}
-	catch (err) {
-		console.log(err.message);
-	}
+	
 };
